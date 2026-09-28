@@ -99,3 +99,28 @@ class GitService:
         )
 
         return self.get_current_branch()
+
+    def checkout_branch(self, branch_name: str) -> str:
+        if not branch_name.strip():
+            raise ValueError("Branch name cannot be empty.")
+
+        self._run_git("checkout", branch_name)
+        return self.get_current_branch()
+
+    def stage_files(self, files: list[str] | str = ".") -> str:
+        if isinstance(files, str):
+            files = [files]
+        self._run_git("add", *files)
+        return "Files staged successfully."
+
+    def commit_changes(self, message: str) -> str:
+        if not message.strip():
+            raise ValueError("Commit message cannot be empty.")
+        out = self._run_git("commit", "-m", message)
+        return out
+
+    def push_branch(self, remote: str = "origin", branch_name: str | None = None) -> str:
+        if not branch_name:
+            branch_name = self.get_current_branch()
+        out = self._run_git("push", "-u", remote, branch_name)
+        return out

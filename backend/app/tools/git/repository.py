@@ -7,4 +7,4 @@ def get_repository_info(repository_path: str) -> dict:
 
     info = service.get_repository_info()
 
-    return info.model_dump()
+    return info.model_dump() 

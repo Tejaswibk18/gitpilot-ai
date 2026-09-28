@@ -220,6 +220,7 @@ Rules:
         self,
         state: AgentState,
         approved: bool,
+        approval_id: str | None = None,
     ) -> AgentState:
 
         if state.status != "waiting_approval":
@@ -238,18 +239,28 @@ Rules:
         # FIND PENDING APPROVAL
         # --------------------------------------------------
 
-        approval = next(
-            (
-                item
-                for item in state.approval_requests
-                if (
-                    item.tool_name
-                    == tool_call.tool_name
-                    and item.status == "pending"
-                )
-            ),
-            None,
-        )
+        if approval_id:
+            approval = next(
+                (
+                    item
+                    for item in state.approval_requests
+                    if getattr(item, "approval_id", None) == approval_id
+                ),
+                None,
+            )
+        else:
+            approval = next(
+                (
+                    item
+                    for item in state.approval_requests
+                    if (
+                        item.tool_name
+                        == tool_call.tool_name
+                        and item.status == "pending"
+                    )
+                ),
+                None,
+            )
 
         if approval is None:
             raise ValueError(
@@ -363,15 +374,23 @@ Rules:
             tool_name
         )
 
-        result = tool.execute(
-            **arguments
-        )
+        try:
+            result = tool.execute(
+                **arguments
+            )
+            success = True
+            error_msg = None
+        except Exception as exc:
+            result = {"error": str(exc)}
+            success = False
+            error_msg = str(exc)
 
         state.tool_results.append(
             ToolResult(
                 tool_name=tool_name,
-                success=True,
-                result=result,
+                success=success,
+                result=result if success else None,
+                error=error_msg,
             )
         )
 

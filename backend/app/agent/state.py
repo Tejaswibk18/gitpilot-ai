@@ -1,3 +1,4 @@
+import uuid
 from typing import Any, Literal
 
 from pydantic import BaseModel, Field
@@ -33,6 +34,7 @@ class ToolResult(BaseModel):
 
 
 class ApprovalRequest(BaseModel):
+    approval_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     tool_name: str
     arguments: dict[str, Any] = Field(default_factory=dict)
 
@@ -45,6 +47,7 @@ class ApprovalRequest(BaseModel):
         "approved",
         "rejected",
     ] = "pending"
+
 
 
 class AgentState(BaseModel):

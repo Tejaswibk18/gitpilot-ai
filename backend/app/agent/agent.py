@@ -20,3 +20,15 @@ class GitPilotAgent:
         )
 
         return self.gemini_agent.run(state)
+
+    def resume_after_approval(
+        self,
+        state: AgentState,
+        approved: bool,
+        approval_id: str | None = None,
+    ) -> AgentState:
+        return self.gemini_agent.resume_after_approval(
+            state,
+            approved=approved,
+            approval_id=approval_id,
+        )

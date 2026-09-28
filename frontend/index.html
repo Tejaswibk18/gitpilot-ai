@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitPilot AI - Autonomous Git Engineering Assistant</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- TOP NAVBAR -->
+        <header class="navbar">
+            <div class="brand">
+                <div class="logo-icon">
+                    <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="6" y1="3" x2="6" y2="15"></line>
+                        <circle cx="18" cy="6" r="3"></circle>
+                        <circle cx="6" cy="18" r="3"></circle>
+                        <path d="M18 9a9 9 0 0 1-9 9"></path>
+                    </svg>
+                </div>
+                <div class="brand-text">
+                    <h1>GitPilot <span>AI</span></h1>
+                    <span class="badge-tag">PR & ISSUES ENABLED</span>
+                </div>
+            </div>
+
+            <!-- REPOSITORY CONNECT BAR -->
+            <div class="repo-bar">
+                <div class="repo-input-wrapper">
+                    <svg class="repo-icon" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+                        <path d="M15 22v-4a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v4"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                    <input type="text" id="targetInput" placeholder="Enter Local Path (e.g. C:\code\myrepo) OR GitHub URL (e.g. owner/repo)" value="">
+                </div>
+                <button id="connectBtn" class="btn-primary">
+                    <span id="connectBtnText">Connect / Clone</span>
+                    <div id="connectSpinner" class="spinner hidden"></div>
+                </button>
+            </div>
+
+            <div class="navbar-right">
+                <div class="token-input-wrapper">
+                    <input type="password" id="tokenInput" placeholder="GitHub Token (Optional)" autocomplete="off">
+                </div>
+                <div id="repoStatusPill" class="status-pill offline">
+                    <span class="dot"></span>
+                    <span id="statusPillText">No Repository Selected</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- MAIN DASHBOARD -->
+        <main class="dashboard-grid">
+            <!-- LEFT PANEL: AGENT CONVERSATION & TASK WORKSPACE -->
+            <section class="workspace-panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                            <polyline points="2 17 12 22 22 17"></polyline>
+                            <polyline points="2 12 12 17 22 12"></polyline>
+                        </svg>
+                        <h2>Agent Workspace</h2>
+                    </div>
+                    <div class="quick-chips">
+                        <button class="chip" data-prompt="Check the repository status and current branch">Status</button>
+                        <button class="chip" data-prompt="Show recent commit history">Commits</button>
+                        <button class="chip" data-prompt="Check for merge conflicts in this repository">Conflicts</button>
+                        <button class="chip" data-prompt="Show open Pull Requests on GitHub">List PRs</button>
+                        <button class="chip" data-prompt="Create a pull request for current branch to main with a description">Create PR</button>
+                        <button class="chip" data-prompt="List open issues on this GitHub repository">Issues</button>
+                    </div>
+                </div>
+
+                <!-- CHAT MESSAGES CONTAINER -->
+                <div class="chat-container" id="chatContainer">
+                    <div class="system-welcome">
+                        <div class="welcome-icon">
+                            <svg viewBox="0 0 24 24" width="28" height="28" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="6" y1="3" x2="6" y2="15"></line>
+                                <circle cx="18" cy="6" r="3"></circle>
+                                <circle cx="6" cy="18" r="3"></circle>
+                                <path d="M18 9a9 9 0 0 1-9 9"></path>
+                            </svg>
+                        </div>
+                        <h3>Welcome to GitPilot AI</h3>
+                        <p>Provide a local Git path or a public GitHub URL above. GitPilot supports AI-driven Git operations, automatic Pull Request creation, PR merging, Smart Merge Conflict Resolution, and GitHub Issue tracking with complete Human-in-the-Loop approval safety.</p>
+                    </div>
+                </div>
+
+                <!-- HUMAN IN THE LOOP APPROVAL BANNER (FLOATING) -->
+                <div id="approvalBanner" class="approval-banner hidden">
+                    <div class="approval-header">
+                        <div class="approval-title">
+                            <span class="warning-icon">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                                    <line x1="12" y1="9" x2="12" y2="13"></line>
+                                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                                </svg>
+                            </span>
+                            <h3>Approval Required for Write Operation</h3>
+                        </div>
+                        <span class="risk-badge">RISK: WRITE</span>
+                    </div>
+                    <p id="approvalDetails" class="approval-details">The AI agent wants to execute a write action on your repository.</p>
+                    <div id="approvalParams" class="approval-params"></div>
+                    <div class="approval-actions">
+                        <button id="approveBtn" class="btn-approve">
+                            <svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" fill="none"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            Approve & Execute
+                        </button>
+                        <button id="rejectBtn" class="btn-reject">
+                            <svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" fill="none"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                            Reject Action
+                        </button>
+                    </div>
+                </div>
+
+                <!-- CHAT INPUT BOX -->
+                <div class="chat-input-area">
+                    <form id="chatForm">
+                        <input type="text" id="userInput" placeholder="Ask GitPilot to commit, resolve merge conflicts, create a PR..." autocomplete="off">
+                        <button type="submit" id="sendBtn" class="btn-send">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="22" y1="2" x2="11" y2="13"></line>
+                                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                            </svg>
+                        </button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- RIGHT PANEL: LIVE GIT & GITHUB INSPECTOR -->
+            <aside class="inspector-panel">
+                <div class="inspector-tabs">
+                    <button class="tab-btn active" data-tab="overview">Overview</button>
+                    <button class="tab-btn" data-tab="diff">Diff</button>
+                    <button class="tab-btn" data-tab="history">Commits</button>
+                    <button class="tab-btn" data-tab="conflicts">Conflicts</button>
+                    <button class="tab-btn" data-tab="prs">PRs</button>
+                    <button class="tab-btn" data-tab="issues">Issues</button>
+                </div>
+
+                <!-- OVERVIEW TAB -->
+                <div id="tab-overview" class="tab-content active">
+                    <div class="info-card">
+                        <span class="card-label">Current Branch</span>
+                        <div id="infoBranch" class="card-value">--</div>
+                    </div>
+
+                    <div class="info-card">
+                        <span class="card-label">Git Remotes</span>
+                        <div id="infoRemotes" class="card-value code-font">--</div>
+                    </div>
+
+                    <div class="info-card">
+                        <span class="card-label">Repository Target</span>
+                        <div id="infoPath" class="card-value code-font text-subtle">--</div>
+                    </div>
+
+                    <div class="changes-section">
+                        <h4>Modified & Untracked Files</h4>
+                        <div id="changesList" class="changes-list">
+                            <div class="empty-state">No repository loaded or no uncommitted changes.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DIFF TAB -->
+                <div id="tab-diff" class="tab-content">
+                    <div class="diff-header-bar">
+                        <h4>Unstaged Diffs</h4>
+                        <button id="refreshDiffBtn" class="btn-secondary btn-sm">Refresh</button>
+                    </div>
+                    <pre id="diffViewer" class="diff-viewer">No diff loaded yet.</pre>
+                </div>
+
+                <!-- HISTORY TAB -->
+                <div id="tab-history" class="tab-content">
+                    <div class="diff-header-bar">
+                        <h4>Recent Commit History</h4>
+                        <button id="refreshHistoryBtn" class="btn-secondary btn-sm">Refresh</button>
+                    </div>
+                    <div id="historyList" class="history-list">
+                        <div class="empty-state">No history loaded yet.</div>
+                    </div>
+                </div>
+
+                <!-- CONFLICTS TAB -->
+                <div id="tab-conflicts" class="tab-content">
+                    <div class="diff-header-bar">
+                        <h4>Smart Conflict Resolver</h4>
+                        <button id="refreshConflictsBtn" class="btn-secondary btn-sm">Detect Conflicts</button>
+                    </div>
+
+                    <div id="conflictStatusCard" class="info-card">
+                        <span class="card-label">Merge Status</span>
+                        <div id="conflictStatusText" class="card-value">No active merge conflicts detected.</div>
+                    </div>
+
+                    <!-- Attempt merge form -->
+                    <div class="conflict-merge-box">
+                        <label class="card-label">Attempt Branch Merge</label>
+                        <div class="conflict-input-row">
+                            <input type="text" id="mergeSourceBranchInput" placeholder="Source branch (e.g. feature-branch)">
+                            <button id="attemptMergeBtn" class="btn-primary btn-sm">Merge</button>
+                        </div>
+                    </div>
+
+                    <div id="conflictedFilesSection" class="changes-section hidden">
+                        <h4>Conflicted Files (<span id="conflictCountBadge">0</span>)</h4>
+                        <div id="conflictedFilesList" class="changes-list"></div>
+                    </div>
+
+                    <!-- Selected file conflict resolution section -->
+                    <div id="conflictDetailSection" class="conflict-detail-box hidden">
+                        <div class="conflict-detail-header">
+                            <span id="selectedConflictFileName" class="conflict-file-name">filename</span>
+                            <button id="resolveAiBtn" class="btn-primary btn-sm">
+                                <span id="resolveAiBtnText">Resolve with Gemini AI</span>
+                                <div id="resolveAiSpinner" class="spinner hidden"></div>
+                            </button>
+                        </div>
+
+                        <div id="conflictExplanationBox" class="ai-explanation-box hidden">
+                            <strong>AI Resolution Explanation:</strong>
+                            <p id="conflictExplanationText"></p>
+                        </div>
+
+                        <div class="conflict-editor-container">
+                            <label class="card-label">Resolution Preview / Editor</label>
+                            <textarea id="conflictResolvedEditor" class="conflict-editor" rows="12" placeholder="Resolved file content will appear here..."></textarea>
+                        </div>
+
+                        <div class="conflict-action-buttons">
+                            <button id="applyResolutionBtn" class="btn-approve btn-sm">Apply & Stage</button>
+                            <button id="completeMergeBtn" class="btn-secondary btn-sm">Complete Merge</button>
+                            <button id="abortMergeBtn" class="btn-reject btn-sm">Abort Merge</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PULL REQUESTS TAB -->
+                <div id="tab-prs" class="tab-content">
+                    <div class="diff-header-bar">
+                        <h4>Open Pull Requests</h4>
+                        <button id="refreshPrsBtn" class="btn-secondary btn-sm">Refresh</button>
+                    </div>
+                    <div id="prsList" class="history-list">
+                        <div class="empty-state">No Pull Requests loaded yet. Connect a GitHub repository.</div>
+                    </div>
+                </div>
+
+                <!-- ISSUES TAB -->
+                <div id="tab-issues" class="tab-content">
+                    <div class="diff-header-bar">
+                        <h4>GitHub Issues</h4>
+                        <button id="refreshIssuesBtn" class="btn-secondary btn-sm">Refresh</button>
+                    </div>
+                    <div id="issuesList" class="history-list">
+                        <div class="empty-state">No Issues loaded yet. Connect a GitHub repository.</div>
+                    </div>
+                </div>
+            </aside>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

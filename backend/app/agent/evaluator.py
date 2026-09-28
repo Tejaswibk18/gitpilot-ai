@@ -1,6 +1,5 @@
 from app.agent.state import AgentState
 
-
 class AgentEvaluator:
     def evaluate(self, state: AgentState) -> AgentState:
         failed_tasks = [
