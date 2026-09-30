@@ -858,3 +858,94 @@ body {
     flex-wrap: wrap;
 }
 
+/* ===== AI COMMIT MESSAGE GENERATOR ===== */
+.commit-panel {
+    margin-top: 16px;
+    border-top: 1px solid var(--border-subtle);
+    padding-top: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.commit-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.commit-panel-header h4 {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-secondary);
+}
+
+.staged-diff-preview {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: 2px;
+    padding: 8px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.staged-diff-content {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    white-space: pre-wrap;
+    word-break: break-all;
+    max-height: 100px;
+    overflow-y: auto;
+    line-height: 1.5;
+}
+
+.commit-message-textarea {
+    width: 100%;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-light);
+    border-radius: 2px;
+    padding: 8px 10px;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    line-height: 1.5;
+    resize: vertical;
+    color: var(--text-primary);
+    transition: border-color 0.15s;
+}
+
+.commit-message-textarea:focus {
+    outline: none;
+    border-color: var(--text-primary);
+}
+
+.commit-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.commit-status-msg {
+    font-size: 0.75rem;
+    padding: 6px 10px;
+    border-radius: 2px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+
+.commit-status-msg.success {
+    border-color: #2d7a2d;
+    color: #2d7a2d;
+    background: #f0fff0;
+}
+
+.commit-status-msg.error {
+    border-color: #a00;
+    color: #a00;
+    background: #fff0f0;
+}

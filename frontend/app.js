@@ -61,6 +61,17 @@ const applyResolutionBtn = document.getElementById("applyResolutionBtn");
 const completeMergeBtn = document.getElementById("completeMergeBtn");
 const abortMergeBtn = document.getElementById("abortMergeBtn");
 
+// Commit Message Generator DOM Elements
+const generateCommitBtn = document.getElementById("generateCommitBtn");
+const generateCommitBtnText = document.getElementById("generateCommitBtnText");
+const generateCommitSpinner = document.getElementById("generateCommitSpinner");
+const stagedDiffPreview = document.getElementById("stagedDiffPreview");
+const stagedDiffContent = document.getElementById("stagedDiffContent");
+const commitMessageInput = document.getElementById("commitMessageInput");
+const stageAllBtn = document.getElementById("stageAllBtn");
+const commitChangesBtn = document.getElementById("commitChangesBtn");
+const commitStatusMsg = document.getElementById("commitStatusMsg");
+
 function getGitHubToken() {
     return tokenInput ? tokenInput.value.trim() : "";
 }
@@ -86,6 +97,11 @@ document.addEventListener("DOMContentLoaded", () => {
     if (applyResolutionBtn) applyResolutionBtn.addEventListener("click", handleApplyResolution);
     if (completeMergeBtn) completeMergeBtn.addEventListener("click", handleCompleteMerge);
     if (abortMergeBtn) abortMergeBtn.addEventListener("click", handleAbortMerge);
+
+    // Commit Message Generator
+    if (generateCommitBtn) generateCommitBtn.addEventListener("click", handleGenerateCommitMessage);
+    if (stageAllBtn) stageAllBtn.addEventListener("click", handleStageAll);
+    if (commitChangesBtn) commitChangesBtn.addEventListener("click", handleCommitChanges);
 
     targetInput.addEventListener("keypress", (e) => {
         if (e.key === "Enter") handleConnect();
@@ -707,5 +723,119 @@ async function handleAbortMerge() {
         fetchDiff();
     } catch (err) {
         alert(`Abort error: ${err.message}`);
+    }
+}
+
+// ===== AI COMMIT MESSAGE GENERATOR =====
+
+function showCommitStatus(message, type) {
+    type = type || "";
+    commitStatusMsg.textContent = message;
+    commitStatusMsg.className = "commit-status-msg " + type;
+    commitStatusMsg.classList.remove("hidden");
+    setTimeout(function() { commitStatusMsg.classList.add("hidden"); }, 5000);
+}
+
+async function handleGenerateCommitMessage() {
+    if (!currentTarget) return alert("Please connect to a repository first.");
+
+    generateCommitBtnText.textContent = "Generating...";
+    generateCommitSpinner.classList.remove("hidden");
+    generateCommitBtn.disabled = true;
+
+    try {
+        const res = await fetch(API_BASE + "/repository/suggest-commit", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ repository_path: currentTarget })
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+            showCommitStatus(data.detail || "Failed to generate commit message.", "error");
+            return;
+        }
+
+        if (data.staged_diff_preview) {
+            stagedDiffContent.textContent = data.staged_diff_preview;
+            stagedDiffPreview.classList.remove("hidden");
+        }
+
+        commitMessageInput.value = data.commit_message || "";
+        showCommitStatus("AI commit message generated. Review and edit before committing.");
+    } catch (err) {
+        showCommitStatus("Error: " + err.message, "error");
+    } finally {
+        generateCommitBtnText.textContent = "Generate with AI";
+        generateCommitSpinner.classList.add("hidden");
+        generateCommitBtn.disabled = false;
+    }
+}
+
+async function handleStageAll() {
+    if (!currentTarget) return alert("Please connect to a repository first.");
+
+    stageAllBtn.disabled = true;
+    stageAllBtn.textContent = "Staging...";
+
+    try {
+        const res = await fetch(API_BASE + "/agent/run", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                user_request: "Stage all modified and untracked files using git add .",
+                target: currentTarget,
+                session_id: currentSessionId
+            })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || "Failed to stage files.");
+
+        currentSessionId = data.session_id;
+        handleAgentResponse(data);
+        showCommitStatus("All files staged. Now click Generate with AI.");
+    } catch (err) {
+        showCommitStatus("Stage error: " + err.message, "error");
+    } finally {
+        stageAllBtn.disabled = false;
+        stageAllBtn.textContent = "Stage All";
+    }
+}
+
+async function handleCommitChanges() {
+    if (!currentTarget) return alert("Please connect to a repository first.");
+
+    const message = commitMessageInput.value.trim();
+    if (!message) return showCommitStatus("Please enter or generate a commit message first.", "error");
+
+    commitChangesBtn.disabled = true;
+    commitChangesBtn.textContent = "Committing...";
+
+    try {
+        const res = await fetch(API_BASE + "/agent/run", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                user_request: "Commit the currently staged changes with this exact commit message: " + JSON.stringify(message),
+                target: currentTarget,
+                session_id: currentSessionId
+            })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || "Failed to commit changes.");
+
+        currentSessionId = data.session_id;
+        handleAgentResponse(data);
+
+        if (data.status === "completed" || data.final_response) {
+            commitMessageInput.value = "";
+            stagedDiffPreview.classList.add("hidden");
+            showCommitStatus("Committed successfully!", "success");
+        }
+    } catch (err) {
+        showCommitStatus("Commit error: " + err.message, "error");
+    } finally {
+        commitChangesBtn.disabled = false;
+        commitChangesBtn.textContent = "Commit Changes";
     }
 }

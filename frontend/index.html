@@ -172,6 +172,37 @@
                             <div class="empty-state">No repository loaded or no uncommitted changes.</div>
                         </div>
                     </div>
+                    <!-- AI COMMIT MESSAGE GENERATOR -->
+                    <div class="commit-panel">
+                        <div class="commit-panel-header">
+                            <h4>AI Commit Message Generator</h4>
+                            <button id="generateCommitBtn" class="btn-primary btn-sm">
+                                <span id="generateCommitBtnText">Generate with AI</span>
+                                <div id="generateCommitSpinner" class="spinner hidden"></div>
+                            </button>
+                        </div>
+
+                        <div id="stagedDiffPreview" class="staged-diff-preview hidden">
+                            <span class="card-label">Staged Diff Preview</span>
+                            <pre id="stagedDiffContent" class="staged-diff-content"></pre>
+                        </div>
+
+                        <div class="commit-message-editor">
+                            <label class="card-label" for="commitMessageInput">Commit Message</label>
+                            <textarea
+                                id="commitMessageInput"
+                                class="commit-message-textarea"
+                                rows="4"
+                                placeholder="Stage your files, then click Generate with AI..."></textarea>
+                        </div>
+
+                        <div class="commit-actions">
+                            <button id="stageAllBtn" class="btn-secondary btn-sm">Stage All</button>
+                            <button id="commitChangesBtn" class="btn-approve btn-sm">Commit Changes</button>
+                        </div>
+
+                        <div id="commitStatusMsg" class="commit-status-msg hidden"></div>
+                    </div>
                 </div>
 
                 <!-- DIFF TAB -->

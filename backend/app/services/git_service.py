@@ -27,9 +27,8 @@ class GitService:
         )
 
         if result.returncode != 0:
-            raise RuntimeError(
-                result.stderr.strip()
-            )
+            error_msg = result.stderr.strip() or result.stdout.strip()
+            raise RuntimeError(error_msg)
 
         return result.stdout.strip()
 
@@ -120,7 +119,25 @@ class GitService:
         return out
 
     def push_branch(self, remote: str = "origin", branch_name: str | None = None) -> str:
+        # Resolve branch name - use symbolic-ref HEAD if not provided
         if not branch_name:
-            branch_name = self.get_current_branch()
+            result = subprocess.run(
+                ["git", "symbolic-ref", "--short", "HEAD"],
+                cwd=self.repository_path,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+            )
+            if result.returncode == 0 and result.stdout.strip():
+                branch_name = result.stdout.strip()
+            else:
+                # Detached HEAD or no commits yet - use HEAD directly
+                branch_name = "HEAD"
+
+        if branch_name == "HEAD":
+            raise RuntimeError(
+                "Repository has no commits yet. Please make at least one commit before pushing."
+            )
+
         out = self._run_git("push", "-u", remote, branch_name)
         return out

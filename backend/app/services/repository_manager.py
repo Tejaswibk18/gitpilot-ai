@@ -2,7 +2,6 @@ import os
 import re
 from pathlib import Path
 import subprocess
-import httpx
 
 from app.services.git_service import GitService
 
