@@ -6,7 +6,7 @@ from fastapi.staticfiles import StaticFiles
 from app.api.routes_repository import router as repository_router
 from app.api.routes_agent import router as agent_router
 from app.api.routes_github import router as github_router
-from app.api.routes_conflicts import router as conflicts_router
+from app.api.routes_auth import router as auth_router
 
 
 app = FastAPI(
@@ -27,7 +27,7 @@ app.add_middleware(
 app.include_router(repository_router)
 app.include_router(agent_router)
 app.include_router(github_router)
-app.include_router(conflicts_router)
+app.include_router(auth_router)
 
 
 @app.get("/health")
@@ -36,7 +36,6 @@ def health_check():
         "status": "healthy",
         "service": "gitpilot-ai",
     }
-
 
 # Mount Frontend UI static files
 frontend_path = Path(__file__).resolve().parent.parent.parent / "frontend"
