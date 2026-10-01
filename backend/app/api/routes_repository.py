@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Cookie, HTTPException
 from pydantic import BaseModel
 
 from app.tools.git.status import get_repository_status
@@ -8,6 +8,9 @@ from app.tools.git.history import get_commit_history
 from app.services.repository_manager import RepositoryManager
 from app.services.git_service import GitService
 from app.services.llm_service import LLMService
+from app.services.github_auth import get_session_token
+
+SESSION_COOKIE = "gitpilot_session"
 
 
 router = APIRouter(
@@ -21,9 +24,9 @@ class RepositoryRequest(BaseModel):
 
 
 @router.post("/info")
-def repository_info(request: RepositoryRequest):
+def repository_info(request: RepositoryRequest, gitpilot_session: str | None = Cookie(default=None, alias=SESSION_COOKIE)):
     try:
-        resolved = RepositoryManager.resolve_repository_path(request.repository_path)
+        resolved = RepositoryManager.resolve_repository_path(request.repository_path, token=get_session_token(gitpilot_session), workspace_namespace=gitpilot_session)
         return get_repository_info(resolved)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
@@ -32,9 +35,9 @@ def repository_info(request: RepositoryRequest):
 
 
 @router.post("/status")
-def repository_status(request: RepositoryRequest):
+def repository_status(request: RepositoryRequest, gitpilot_session: str | None = Cookie(default=None, alias=SESSION_COOKIE)):
     try:
-        resolved = RepositoryManager.resolve_repository_path(request.repository_path)
+        resolved = RepositoryManager.resolve_repository_path(request.repository_path, token=get_session_token(gitpilot_session), workspace_namespace=gitpilot_session)
         return get_repository_status(resolved)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
@@ -43,9 +46,9 @@ def repository_status(request: RepositoryRequest):
 
 
 @router.post("/diff")
-def repository_diff(request: RepositoryRequest):
+def repository_diff(request: RepositoryRequest, gitpilot_session: str | None = Cookie(default=None, alias=SESSION_COOKIE)):
     try:
-        resolved = RepositoryManager.resolve_repository_path(request.repository_path)
+        resolved = RepositoryManager.resolve_repository_path(request.repository_path, token=get_session_token(gitpilot_session), workspace_namespace=gitpilot_session)
         return get_repository_diff(resolved)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
@@ -57,9 +60,10 @@ def repository_diff(request: RepositoryRequest):
 def repository_history(
     request: RepositoryRequest,
     limit: int = 10,
+    gitpilot_session: str | None = Cookie(default=None, alias=SESSION_COOKIE),
 ):
     try:
-        resolved = RepositoryManager.resolve_repository_path(request.repository_path)
+        resolved = RepositoryManager.resolve_repository_path(request.repository_path, token=get_session_token(gitpilot_session), workspace_namespace=gitpilot_session)
         return get_commit_history(resolved, limit=limit)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
@@ -68,10 +72,10 @@ def repository_history(
 
 
 @router.post("/staged-diff")
-def repository_staged_diff(request: RepositoryRequest):
+def repository_staged_diff(request: RepositoryRequest, gitpilot_session: str | None = Cookie(default=None, alias=SESSION_COOKIE)):
     """Returns the staged diff (git diff --cached) for commit message generation."""
     try:
-        resolved = RepositoryManager.resolve_repository_path(request.repository_path)
+        resolved = RepositoryManager.resolve_repository_path(request.repository_path, token=get_session_token(gitpilot_session), workspace_namespace=gitpilot_session)
         git = GitService(resolved)
         diff = git.get_staged_diff()
         return {"staged_diff": diff or ""}
@@ -82,10 +86,10 @@ def repository_staged_diff(request: RepositoryRequest):
 
 
 @router.post("/suggest-commit")
-def suggest_commit_message(request: RepositoryRequest):
+def suggest_commit_message(request: RepositoryRequest, gitpilot_session: str | None = Cookie(default=None, alias=SESSION_COOKIE)):
     """Uses Gemini AI to generate a Conventional Commit message from the staged diff."""
     try:
-        resolved = RepositoryManager.resolve_repository_path(request.repository_path)
+        resolved = RepositoryManager.resolve_repository_path(request.repository_path, token=get_session_token(gitpilot_session), workspace_namespace=gitpilot_session)
         git = GitService(resolved)
         staged_diff = git.get_staged_diff()
 

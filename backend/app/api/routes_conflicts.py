@@ -1,9 +1,12 @@
 from typing import Optional
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Cookie, HTTPException
 from pydantic import BaseModel
 
 from app.services.repository_manager import RepositoryManager
 from app.services.conflict_service import ConflictService
+from app.services.github_auth import get_session_token
+
+SESSION_COOKIE = "gitpilot_session"
 
 
 router = APIRouter(
@@ -35,9 +38,9 @@ class CompleteMergeRequest(BaseConflictRequest):
 
 
 @router.post("/attempt-merge")
-def attempt_merge(request: AttemptMergeRequest):
+def attempt_merge(request: AttemptMergeRequest, gitpilot_session: str | None = Cookie(default=None, alias=SESSION_COOKIE)):
     try:
-        resolved = RepositoryManager.resolve_repository_path(request.repository_path)
+        resolved = RepositoryManager.resolve_repository_path(request.repository_path, token=get_session_token(gitpilot_session), workspace_namespace=gitpilot_session)
         service = ConflictService(resolved)
         return service.attempt_merge(request.target_branch, request.source_branch)
     except ValueError as exc:
@@ -47,9 +50,9 @@ def attempt_merge(request: AttemptMergeRequest):
 
 
 @router.post("/detect")
-def detect_conflicts(request: BaseConflictRequest):
+def detect_conflicts(request: BaseConflictRequest, gitpilot_session: str | None = Cookie(default=None, alias=SESSION_COOKIE)):
     try:
-        resolved = RepositoryManager.resolve_repository_path(request.repository_path)
+        resolved = RepositoryManager.resolve_repository_path(request.repository_path, token=get_session_token(gitpilot_session), workspace_namespace=gitpilot_session)
         service = ConflictService(resolved)
         conflicted_files = service.get_conflicted_files()
         return {
@@ -64,9 +67,9 @@ def detect_conflicts(request: BaseConflictRequest):
 
 
 @router.post("/details")
-def conflict_details(request: ConflictFileRequest):
+def conflict_details(request: ConflictFileRequest, gitpilot_session: str | None = Cookie(default=None, alias=SESSION_COOKIE)):
     try:
-        resolved = RepositoryManager.resolve_repository_path(request.repository_path)
+        resolved = RepositoryManager.resolve_repository_path(request.repository_path, token=get_session_token(gitpilot_session), workspace_namespace=gitpilot_session)
         service = ConflictService(resolved)
         return service.get_conflict_details(request.file_path)
     except ValueError as exc:
@@ -76,9 +79,9 @@ def conflict_details(request: ConflictFileRequest):
 
 
 @router.post("/resolve-ai")
-def resolve_conflicts_ai(request: ConflictFileRequest):
+def resolve_conflicts_ai(request: ConflictFileRequest, gitpilot_session: str | None = Cookie(default=None, alias=SESSION_COOKIE)):
     try:
-        resolved = RepositoryManager.resolve_repository_path(request.repository_path)
+        resolved = RepositoryManager.resolve_repository_path(request.repository_path, token=get_session_token(gitpilot_session), workspace_namespace=gitpilot_session)
         service = ConflictService(resolved)
         return service.generate_ai_resolution(request.file_path)
     except ValueError as exc:
@@ -88,9 +91,9 @@ def resolve_conflicts_ai(request: ConflictFileRequest):
 
 
 @router.post("/apply")
-def apply_conflict_resolution(request: ApplyResolutionRequest):
+def apply_conflict_resolution(request: ApplyResolutionRequest, gitpilot_session: str | None = Cookie(default=None, alias=SESSION_COOKIE)):
     try:
-        resolved = RepositoryManager.resolve_repository_path(request.repository_path)
+        resolved = RepositoryManager.resolve_repository_path(request.repository_path, token=get_session_token(gitpilot_session), workspace_namespace=gitpilot_session)
         service = ConflictService(resolved)
         return service.apply_resolution(request.file_path, request.resolved_content)
     except ValueError as exc:
@@ -100,9 +103,9 @@ def apply_conflict_resolution(request: ApplyResolutionRequest):
 
 
 @router.post("/complete")
-def complete_merge(request: CompleteMergeRequest):
+def complete_merge(request: CompleteMergeRequest, gitpilot_session: str | None = Cookie(default=None, alias=SESSION_COOKIE)):
     try:
-        resolved = RepositoryManager.resolve_repository_path(request.repository_path)
+        resolved = RepositoryManager.resolve_repository_path(request.repository_path, token=get_session_token(gitpilot_session), workspace_namespace=gitpilot_session)
         service = ConflictService(resolved)
         return service.complete_merge(request.message)
     except ValueError as exc:
@@ -112,9 +115,9 @@ def complete_merge(request: CompleteMergeRequest):
 
 
 @router.post("/abort")
-def abort_merge(request: BaseConflictRequest):
+def abort_merge(request: BaseConflictRequest, gitpilot_session: str | None = Cookie(default=None, alias=SESSION_COOKIE)):
     try:
-        resolved = RepositoryManager.resolve_repository_path(request.repository_path)
+        resolved = RepositoryManager.resolve_repository_path(request.repository_path, token=get_session_token(gitpilot_session), workspace_namespace=gitpilot_session)
         service = ConflictService(resolved)
         return service.abort_merge()
     except ValueError as exc:

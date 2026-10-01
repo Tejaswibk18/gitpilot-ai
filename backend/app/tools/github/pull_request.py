@@ -1,5 +1,6 @@
 from typing import Optional
 from app.services.github_service import GitHubService
+from app.services.github_auth import get_workspace_token
 
 
 def create_pull_request(
@@ -10,7 +11,7 @@ def create_pull_request(
     base_branch: str = "main",
     token: Optional[str] = None,
 ) -> dict:
-    github_service = GitHubService(token=token)
+    github_service = GitHubService(token=token or get_workspace_token(repository_path))
     repo_slug = github_service.extract_repo_slug(repository_path)
     res = github_service.create_pull_request(
         repo_slug=repo_slug,
@@ -34,7 +35,7 @@ def list_pull_requests(
     state: str = "open",
     token: Optional[str] = None,
 ) -> dict:
-    github_service = GitHubService(token=token)
+    github_service = GitHubService(token=token or get_workspace_token(repository_path))
     repo_slug = github_service.extract_repo_slug(repository_path)
     prs = github_service.list_pull_requests(repo_slug=repo_slug, state=state)
     return {
@@ -49,7 +50,7 @@ def merge_pull_request(
     commit_title: Optional[str] = None,
     token: Optional[str] = None,
 ) -> dict:
-    github_service = GitHubService(token=token)
+    github_service = GitHubService(token=token or get_workspace_token(repository_path))
     repo_slug = github_service.extract_repo_slug(repository_path)
     res = github_service.merge_pull_request(
         repo_slug=repo_slug,

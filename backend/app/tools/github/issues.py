@@ -1,5 +1,6 @@
 from typing import Optional
 from app.services.github_service import GitHubService
+from app.services.github_auth import get_workspace_token
 
 
 def list_issues(
@@ -7,7 +8,7 @@ def list_issues(
     state: str = "open",
     token: Optional[str] = None,
 ) -> dict:
-    github_service = GitHubService(token=token)
+    github_service = GitHubService(token=token or get_workspace_token(repository_path))
     repo_slug = github_service.extract_repo_slug(repository_path)
     issues = github_service.list_issues(repo_slug=repo_slug, state=state)
     return {
@@ -21,7 +22,7 @@ def get_issue(
     issue_number: int,
     token: Optional[str] = None,
 ) -> dict:
-    github_service = GitHubService(token=token)
+    github_service = GitHubService(token=token or get_workspace_token(repository_path))
     repo_slug = github_service.extract_repo_slug(repository_path)
     issue = github_service.get_issue(repo_slug=repo_slug, issue_number=issue_number)
     return {
@@ -36,7 +37,7 @@ def create_issue_comment(
     body: str,
     token: Optional[str] = None,
 ) -> dict:
-    github_service = GitHubService(token=token)
+    github_service = GitHubService(token=token or get_workspace_token(repository_path))
     repo_slug = github_service.extract_repo_slug(repository_path)
     res = github_service.create_issue_comment(
         repo_slug=repo_slug,

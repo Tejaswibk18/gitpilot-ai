@@ -13,7 +13,7 @@ load_dotenv()
 class GitHubService:
 
     def __init__(self, token: Optional[str] = None):
-        self.token = token or os.getenv("GITHUB_TOKEN")
+        self.token = token
         self.base_url = "https://api.github.com"
         self.headers = {
             "Accept": "application/vnd.github+json",
@@ -69,8 +69,8 @@ class GitHubService:
             detail_lower = detail.lower()
             if "rate limit" in detail_lower or "secondary rate limit" in detail_lower or res.headers.get("x-ratelimit-remaining") == "0":
                 raise RuntimeError(
-                    "GitHub API Rate Limit Exceeded (60 req/hr for unauthenticated IPs). "
-                    "Please configure a GITHUB_TOKEN in your .env file or UI settings to get 5,000 req/hr."
+                    "GitHub API rate limit exceeded. Connect your GitHub account in GitPilot "
+                    "to use authenticated GitHub API access."
                 )
 
         if res.status_code not in (200, 201):

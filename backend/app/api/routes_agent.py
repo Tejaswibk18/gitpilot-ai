@@ -1,12 +1,14 @@
-import os
 import uuid
 from typing import Dict, Optional
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Cookie, HTTPException
 from pydantic import BaseModel, Field
 
 from app.agent.agent import GitPilotAgent
 from app.agent.state import AgentState
 from app.services.repository_manager import RepositoryManager
+from app.services.github_auth import get_session_token
+
+SESSION_COOKIE = "gitpilot_session"
 
 router = APIRouter(
     prefix="/api/agent",
@@ -22,7 +24,6 @@ class AgentRunRequest(BaseModel):
     user_request: str = Field(..., description="Prompt or command for GitPilot AI")
     target: str = Field(..., description="Local repository path OR GitHub URL / owner/repo slug")
     session_id: Optional[str] = Field(None, description="Existing session ID if continuing conversation")
-    token: Optional[str] = Field(None, description="Optional GitHub Personal Access Token")
 
 
 class AgentApproveRequest(BaseModel):
@@ -32,12 +33,13 @@ class AgentApproveRequest(BaseModel):
 
 
 @router.post("/run")
-def run_agent(request: AgentRunRequest):
-    if request.token:
-        os.environ["GITHUB_TOKEN"] = request.token
-
+def run_agent(request: AgentRunRequest, gitpilot_session: str | None = Cookie(default=None, alias=SESSION_COOKIE)):
     try:
-        resolved_path = RepositoryManager.resolve_repository_path(request.target)
+        resolved_path = RepositoryManager.resolve_repository_path(
+            request.target,
+            token=get_session_token(gitpilot_session),
+            workspace_namespace=gitpilot_session,
+        )
     except Exception as exc:
         raise HTTPException(status_code=400, detail=str(exc))
 
