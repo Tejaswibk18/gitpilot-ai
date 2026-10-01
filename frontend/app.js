@@ -9,11 +9,12 @@ let selectedConflictFile = null;
 
 // DOM ELEMENTS
 const targetInput = document.getElementById("targetInput");
-const tokenInput = document.getElementById("tokenInput");
 const connectBtn = document.getElementById("connectBtn");
 const connectBtnText = document.getElementById("connectBtnText");
 const connectSpinner = document.getElementById("connectSpinner");
 const repoStatusPill = document.getElementById("repoStatusPill");
+const githubAuthBtn = document.getElementById("githubAuthBtn");
+const githubUserText = document.getElementById("githubUserText");
 const statusPillText = document.getElementById("statusPillText");
 
 const chatContainer = document.getElementById("chatContainer");
@@ -73,14 +74,53 @@ const stageAllBtn = document.getElementById("stageAllBtn");
 const commitChangesBtn = document.getElementById("commitChangesBtn");
 const commitStatusMsg = document.getElementById("commitStatusMsg");
 
-function getGitHubToken() {
-    return tokenInput ? tokenInput.value.trim() : "";
+
+// GITHUB OAUTH
+function setupGitHubAuth() {
+    if (!githubAuthBtn) return;
+    githubAuthBtn.addEventListener("click", async () => {
+        const authenticated = githubAuthBtn.dataset.authenticated === "true";
+        if (authenticated) {
+            await fetch(`${API_BASE}/auth/logout`, { method: "POST", credentials: "same-origin" });
+            setGitHubAuthState(false);
+            return;
+        }
+        window.location.href = `${API_BASE}/auth/github/login`;
+    });
+}
+
+async function checkGitHubAuth() {
+    try {
+        const res = await fetch(`${API_BASE}/auth/me`, { credentials: "same-origin" });
+        const data = await res.json();
+        setGitHubAuthState(Boolean(data.authenticated), data.user);
+
+        const params = new URLSearchParams(window.location.search);
+        const error = params.get("github_error");
+        if (error) {
+            appendAgentMessage(`**GitHub Authentication Error**: ${decodeURIComponent(error)}`);
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+    } catch (err) {
+        setGitHubAuthState(false);
+    }
+}
+
+function setGitHubAuthState(authenticated, user = null) {
+    if (!githubAuthBtn || !githubUserText) return;
+    githubAuthBtn.dataset.authenticated = authenticated ? "true" : "false";
+    githubAuthBtn.textContent = authenticated ? "Disconnect GitHub" : "Connect GitHub";
+    githubUserText.textContent = authenticated
+        ? `@${user?.login || "GitHub user"}`
+        : "Not connected";
 }
 
 // INITIALIZATION
 document.addEventListener("DOMContentLoaded", () => {
     setupTabSwitching();
     setupQuickChips();
+    setupGitHubAuth();
+    checkGitHubAuth();
 
     connectBtn.addEventListener("click", handleConnect);
     chatForm.addEventListener("submit", handleSendMessage);
@@ -299,11 +339,11 @@ async function fetchPRs() {
     if (!currentTarget || !prsList) return;
     prsList.innerHTML = '<div class="empty-state">Loading Pull Requests...</div>';
     try {
-        const token = getGitHubToken();
         const res = await fetch(`${API_BASE}/github/prs`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ repository_path: currentTarget, token: token || undefined })
+            credentials: "same-origin",
+            body: JSON.stringify({ repository_path: currentTarget })
         });
         const data = await res.json();
 
@@ -341,11 +381,11 @@ async function fetchIssues() {
     if (!currentTarget || !issuesList) return;
     issuesList.innerHTML = '<div class="empty-state">Loading GitHub Issues...</div>';
     try {
-        const token = getGitHubToken();
         const res = await fetch(`${API_BASE}/github/issues`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ repository_path: currentTarget, token: token || undefined })
+            credentials: "same-origin",
+            body: JSON.stringify({ repository_path: currentTarget })
         });
         const data = await res.json();
 
