@@ -51,14 +51,22 @@ class ConflictService:
             return []
         return [line.strip() for line in stdout.splitlines() if line.strip()]
 
-    def attempt_merge(self, source_branch: str, target_branch: str | None = None) -> dict[str, Any]:
+    def attempt_merge(self, target_branch: str, source_branch: str) -> dict[str, Any]:
+        if not target_branch or not source_branch:
+            raise ValueError("Both target_branch and source_branch are required.")
+
+        if target_branch == source_branch:
+            raise ValueError(f"Cannot merge branch '{source_branch}' into itself.")
+
         # 1. Always fetch latest refs from remotes first
         self._run_git("fetch", "--all", check=False)
 
         current_branch = self.get_current_branch()
 
-        if target_branch and target_branch != current_branch:
-            self._run_git("checkout", target_branch, check=False)
+        if target_branch != current_branch:
+            code, out, err = self._run_git("switch", target_branch, check=False)
+            if code != 0:
+                raise RuntimeError(f"Failed to switch to target branch '{target_branch}'. Ensure the branch exists and working tree is clean. Error: {err or out}")
             current_branch = self.get_current_branch()
 
         # Resolve merge ref (check if branch exists locally or as origin/branch)

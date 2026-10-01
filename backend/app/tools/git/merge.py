@@ -4,11 +4,11 @@ from app.services.conflict_service import ConflictService
 
 def attempt_merge(
     repository_path: str,
+    target_branch: str,
     source_branch: str,
-    target_branch: str | None = None,
 ) -> dict[str, Any]:
     service = ConflictService(repository_path)
-    return service.attempt_merge(source_branch, target_branch)
+    return service.attempt_merge(target_branch, source_branch)
 
 
 def abort_merge(

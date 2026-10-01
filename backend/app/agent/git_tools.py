@@ -131,8 +131,8 @@ def create_git_tool_registry() -> ToolRegistry:
     target_branch_parameter = ToolParameter(
         name="target_branch",
         type="string",
-        description="Target branch to merge into (optional, defaults to current branch).",
-        required=False,
+        description="Target branch to merge into.",
+        required=True,
     )
 
     resolved_content_parameter = ToolParameter(
@@ -263,7 +263,7 @@ def create_git_tool_registry() -> ToolRegistry:
     registry.register(
         Tool(
             name="attempt_merge",
-            description="Attempt to merge source_branch into target_branch (or current branch).",
+            description="Attempt to merge source_branch into target_branch.",
             function=attempt_merge,
             parameters=[repository_path_parameter, source_branch_parameter, target_branch_parameter],
             risk="write",

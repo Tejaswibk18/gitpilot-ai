@@ -44,6 +44,7 @@ const refreshIssuesBtn = document.getElementById("refreshIssuesBtn");
 // Conflict Resolver DOM Elements
 const refreshConflictsBtn = document.getElementById("refreshConflictsBtn");
 const conflictStatusText = document.getElementById("conflictStatusText");
+const mergeTargetBranchInput = document.getElementById("mergeTargetBranchInput");
 const mergeSourceBranchInput = document.getElementById("mergeSourceBranchInput");
 const attemptMergeBtn = document.getElementById("attemptMergeBtn");
 const conflictedFilesSection = document.getElementById("conflictedFilesSection");
@@ -606,8 +607,11 @@ async function loadConflictFileDetails(filePath) {
 }
 
 async function handleAttemptMerge() {
+    const targetBranch = mergeTargetBranchInput.value.trim();
     const sourceBranch = mergeSourceBranchInput.value.trim();
-    if (!sourceBranch) return alert("Please enter a source branch to merge from.");
+    if (!targetBranch || !sourceBranch) {
+        return alert("Please enter both a target branch and a source branch.");
+    }
 
     if (!currentTarget) return alert("Please connect to a repository first.");
 
@@ -615,7 +619,11 @@ async function handleAttemptMerge() {
         const res = await fetch(`${API_BASE}/conflicts/attempt-merge`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ repository_path: currentTarget, source_branch: sourceBranch })
+            body: JSON.stringify({ 
+                repository_path: currentTarget, 
+                target_branch: targetBranch,
+                source_branch: sourceBranch 
+            })
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.detail || "Failed to attempt merge.");

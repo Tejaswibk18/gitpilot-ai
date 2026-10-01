@@ -766,10 +766,19 @@ body {
     display: flex;
     gap: 8px;
     margin-top: 6px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.merge-arrow {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    flex-shrink: 0;
 }
 
 .conflict-input-row input {
     flex: 1;
+    min-width: 0;
     padding: 7px 10px;
     border: 1px solid var(--border-light);
     border-radius: 2px;

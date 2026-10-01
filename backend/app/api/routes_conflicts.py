@@ -17,8 +17,8 @@ class BaseConflictRequest(BaseModel):
 
 
 class AttemptMergeRequest(BaseConflictRequest):
+    target_branch: str
     source_branch: str
-    target_branch: Optional[str] = None
 
 
 class ConflictFileRequest(BaseConflictRequest):
@@ -39,7 +39,7 @@ def attempt_merge(request: AttemptMergeRequest):
     try:
         resolved = RepositoryManager.resolve_repository_path(request.repository_path)
         service = ConflictService(resolved)
-        return service.attempt_merge(request.source_branch, request.target_branch)
+        return service.attempt_merge(request.target_branch, request.source_branch)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
     except RuntimeError as exc:
