@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: gitpilot-ai
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GITHUB_TOKEN
+        sync: false
+      - key: WORKSPACE_ROOT
+        value: /app/backend/workspaces
+      - key: CORS_ORIGINS
+        value: http://localhost:8000,http://127.0.0.1:8000
