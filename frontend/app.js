@@ -1,6 +1,6 @@
 const API_BASE = window.location.origin.includes("localhost") || window.location.origin.includes("127.0.0.1")
     ? window.location.origin.replace(/\/$/, "") + "/api"
-    : "http://localhost:8000/api";
+    : "/api";
 
 let currentTarget = "";
 let currentSessionId = null;
@@ -81,7 +81,7 @@ function getGitHubToken() {
 document.addEventListener("DOMContentLoaded", () => {
     setupTabSwitching();
     setupQuickChips();
-    
+
     connectBtn.addEventListener("click", handleConnect);
     chatForm.addEventListener("submit", handleSendMessage);
     approveBtn.addEventListener("click", () => handleApproval(true));
@@ -125,7 +125,7 @@ function setupTabSwitching() {
         btn.addEventListener("click", () => {
             document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
             document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
-            
+
             btn.classList.add("active");
             btn.scrollIntoView({ behavior: 'smooth', inline: 'nearest', block: 'nearest' });
 
@@ -219,7 +219,7 @@ async function fetchStatus() {
             body: JSON.stringify({ repository_path: currentTarget })
         });
         const data = await res.json();
-        
+
         changesList.innerHTML = "";
         const allChanges = [
             ...(data.modified || []).map(f => ({ file: f, type: 'M' })),
@@ -469,7 +469,7 @@ function handleAgentResponse(data) {
     if (data.status === "waiting_approval" && data.approval_requests && data.approval_requests.length > 0) {
         const req = data.approval_requests[data.approval_requests.length - 1];
         currentApprovalId = req.approval_id || req.id;
-        
+
         approvalDetails.textContent = `Agent requests to run tool '${req.tool_name}' which modifies repository/GitHub state.`;
         approvalParams.textContent = JSON.stringify(req.arguments, null, 2);
         approvalBanner.classList.remove("hidden");
@@ -619,10 +619,10 @@ async function handleAttemptMerge() {
         const res = await fetch(`${API_BASE}/conflicts/attempt-merge`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ 
-                repository_path: currentTarget, 
+            body: JSON.stringify({
+                repository_path: currentTarget,
                 target_branch: targetBranch,
-                source_branch: sourceBranch 
+                source_branch: sourceBranch
             })
         });
         const data = await res.json();
@@ -741,7 +741,7 @@ function showCommitStatus(message, type) {
     commitStatusMsg.textContent = message;
     commitStatusMsg.className = "commit-status-msg " + type;
     commitStatusMsg.classList.remove("hidden");
-    setTimeout(function() { commitStatusMsg.classList.add("hidden"); }, 5000);
+    setTimeout(function () { commitStatusMsg.classList.add("hidden"); }, 5000);
 }
 
 async function handleGenerateCommitMessage() {
